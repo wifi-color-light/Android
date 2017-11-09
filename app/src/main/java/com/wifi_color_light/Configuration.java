@@ -52,7 +52,6 @@ public class Configuration  {
      * @return 如果已经连接上wifi则返回wifi名称，如果未连接则返回null
      */
     public String connectedWifiName() {
-        WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
         if (!wifiManager.isWifiEnabled()) {
             wifiManager.setWifiEnabled(true);
         }
@@ -61,12 +60,8 @@ public class Configuration  {
             return null;
         return wifiInfo.getSSID();
     }
-
-    public int changeWifiConnected(String ssid, String password) {
-        WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
-        /**
-         *
-         */
+    public List<ScanResult> scanAccessPoint()
+    {
         if (Build.VERSION.SDK_INT >= 24 ){
             String[] permissions = {Manifest.permission.ACCESS_FINE_LOCATION};
             if (ContextCompat.checkSelfPermission(context, permissions[0])
@@ -85,50 +80,30 @@ public class Configuration  {
             if ((ContextCompat.checkSelfPermission(context,permissions[0])
                     != PackageManager.PERMISSION_GRANTED ) ||
                     (locationManager.getProviders(true).size() < 3))
-                return -1;
+                return null;
         }
         /**
          *
          */
         wifiManager.startScan();
         List<ScanResult> scanResults = wifiManager.getScanResults();
-        Log.i("setRouterInfo", "changeWifiConnected: scanResults.size()" + scanResults.size());
-        int i = 0;
-        for (i =  0; i < scanResults.size(); i++) {
-            Log.i("setRouterInfo", "changeWifiConnected: [" + i + "]\t:" + scanResults.get(i).SSID);
-            if (scanResults.get(i).SSID.equals(ssid))
-                break;
-        }
-        Log.i("setRouterInfo", "changeWifiConnected: i:" + i);
-        if (i > scanResults.size()) return -2;
-        /**
-         *
-         */
-        WifiConfiguration config  = new WifiConfiguration();
-        config.allowedAuthAlgorithms.clear();
-        config.allowedGroupCiphers.clear();
-        config.allowedKeyManagement.clear();
-        config.allowedPairwiseCiphers.clear();
-        config.allowedProtocols.clear();
-        config.SSID = "\"" + ssid + "\"";
-        config.hiddenSSID = true;
-        config.wepKeys[0] = "\"" + password + "\"";
-        config.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
-        config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
-        config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
-        config.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
-// 此处需要修改否则不能自动重联
-// config.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
-        config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
-        config.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
-        config.status = WifiConfiguration.Status.ENABLED;
+        return scanResults;
+    }
 
-        config.wepTxKeyIndex = 0;
-        int wcgID = wifiManager.addNetwork(createWifiConfig(ssid,password,2));
-        boolean flag=wifiManager.enableNetwork(wcgID, true);
-
-        Log.i("setRouterInfo", "changeWifiConnected: flag:" + flag);
-        return 0;
+    /**
+     *
+     * @param ssid
+     * @param password
+     * @return
+     */
+    public boolean changeWifiConnected(String ssid, String password) {
+        WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+        if (wifiInfo.getSSID().indexOf(ssid) >= 0) return true;
+        WifiConfiguration config = isExist(ssid);
+        if (config != null && password == null)
+           return wifiManager.enableNetwork(config.networkId,true);
+        int wcgID = wifiManager.addNetwork(createWifiConfig(ssid,password,WIFICIPHER_WPA));
+        return  wifiManager.enableNetwork(wcgID, true);
     }
 
     /**
@@ -216,7 +191,6 @@ public class Configuration  {
         config.allowedKeyManagement.clear();
         config.allowedPairwiseCiphers.clear();
         config.allowedProtocols.clear();
-
         //指定对应的SSID
         config.SSID = "\"" + ssid + "\"";
 
