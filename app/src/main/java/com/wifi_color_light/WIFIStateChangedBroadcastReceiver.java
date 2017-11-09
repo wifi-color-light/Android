@@ -19,7 +19,6 @@ import android.util.Log;
 public class WIFIStateChangedBroadcastReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
-        Log.i("BroadcastReceiver", "onReceive: " + intent.getAction().toString());
         if (WifiManager.NETWORK_STATE_CHANGED_ACTION.equals(intent.getAction())) {
             Parcelable parcelableExtra = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
 
@@ -29,6 +28,8 @@ public class WIFIStateChangedBroadcastReceiver extends BroadcastReceiver {
                 boolean isConnected = state== NetworkInfo.State.CONNECTED;//当然，这边可以更精确的确定状态
                 Log.i(this.getClass().getSimpleName(), "isConnected"+isConnected);
                 if(isConnected){
+                    //WifiInfo wifiInfo = ((WifiManager)context.getSystemService(context.WIFI_SERVICE)).getConnectionInfo();
+                    Messagequeue.addMessage(new Message(MessageGroup.WIFI,WifiMessageId.connection,null));
                 }else{
 
                 }
