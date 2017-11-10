@@ -37,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
     Button configBt;
     Button scanBt;
     Configuration config;
+    WifiAdmin wifiAdmin;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,11 +50,12 @@ public class MainActivity extends AppCompatActivity {
         configBt = (Button)findViewById(R.id.configBt) ;
         scanBt = (Button)findViewById(R.id.scanBt);
         config = new Configuration(MainActivity.this);
+        wifiAdmin = new WifiAdmin(MainActivity.this);
         routerBt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
-                String wifiName = config.connectedWifiName();
+                String wifiName = wifiAdmin.connectedWifiName();
                 routerName.setText(wifiName.substring(1,wifiName.length()-1));
             }
         });
@@ -61,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 
-                List<ScanResult> scanResults = config.scanAccessPoint();
+                List<ScanResult> scanResults = wifiAdmin.scanAccessPoint();
                 deviceAPname.setText("LAPTOP-K9P8O50M");
                 deviceAPpass.setText("01P7r9@5");
             }
@@ -69,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
         configBt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-               if( config.changeWifiConnected(deviceAPname.getText().toString(),deviceAPpass.getText().toString()))
+               if(wifiAdmin.changeWifiConnected(deviceAPname.getText().toString(),deviceAPpass.getText().toString()))
                {
 
                    //config.setRouterInfo(routerName.getText().toString(),routerPass.getText().toString());
