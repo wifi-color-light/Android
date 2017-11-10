@@ -39,100 +39,13 @@ import static android.content.Context.ACTIVITY_SERVICE;
  */
 
 public class Configuration {
-    private Context context;
+
     WifiManager wifiManager = null;
 
     Configuration(Context context) {
-        this.context = context;
         this.wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
     }
 
-    /**
-     * 获取当前已连接的wifi名称
-     *
-     * @return 如果已经连接上wifi则返回wifi名称，如果未连接则返回null
-     */
-    public String connectedWifiName() {
-        if (!wifiManager.isWifiEnabled()) {
-            wifiManager.setWifiEnabled(true);
-        }
-        WifiInfo wifiInfo = wifiManager.getConnectionInfo();
-        if (wifiInfo.getBSSID() == null)
-            return null;
-        return wifiInfo.getSSID();
-    }
-
-    public List<ScanResult> scanAccessPoint() {
-        if (Build.VERSION.SDK_INT >= 24) {
-            String[] permissions = {Manifest.permission.ACCESS_FINE_LOCATION};
-            if (ContextCompat.checkSelfPermission(context, permissions[0])
-                    != PackageManager.PERMISSION_GRANTED) {
-                Log.i("setRouterInfo", "changeWifiConnected: 请求开启定位权限");
-                ActivityCompat.requestPermissions((Activity) context, permissions, 1);
-            }
-            LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-            Log.i("setRouterInfo", "changeWifiConnected: 定位服务提供者：" + locationManager.getProviders(true));
-
-            if (locationManager.getProviders(true).size() < 3) {
-                Log.i("setRouterInfo", "changeWifiConnected: 定位功能关闭，正在打开");
-                Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                ((Activity) context).startActivityForResult(intent, 10);
-            }
-            if ((ContextCompat.checkSelfPermission(context, permissions[0])
-                    != PackageManager.PERMISSION_GRANTED) ||
-                    (locationManager.getProviders(true).size() < 3))
-                return null;
-        }
-        /**
-         *
-         */
-        wifiManager.startScan();
-        List<ScanResult> scanResults = wifiManager.getScanResults();
-        return scanResults;
-    }
-
-    /**
-     * @param ssid
-     * @param password
-     * @return
-     */
-    public boolean changeWifiConnected(String ssid, String password) {
-        Log.i("Configuration", "changeWifiConnected: ssid: " + ssid + "\tpassword: " + password);
-        WifiInfo wifiInfo = wifiManager.getConnectionInfo();
-        // if (wifiInfo.getSSID().substring(1,wifiInfo.getSSID().length()-1).equals(ssid)) return true;
-        List<WifiConfiguration> wifiConfigList = wifiManager.getConfiguredNetworks();
-        for (WifiConfiguration c: wifiConfigList) {
-            wifiManager.disableNetwork(c.networkId);
-        }
-        //wifiManager.disconnect();
-        WifiConfiguration config = isExist(ssid);
-        if (config != null && password == null)
-            return wifiManager.enableNetwork(config.networkId, true);
-        wifiManager.removeNetwork(config.networkId);
-
-        int wcgID = wifiManager.addNetwork(createWifiConfig(ssid, password,WIFICIPHER_WPA));
-        Log.i("Configuration", "changeWifiConnected: 准备启动新的wifi连接");
-        wifiManager.enableNetwork(wcgID, true);
-        wifiManager.reconnect();
-        int i;
-        for (i = 0; i < 10; i++) {
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            WifiManager wifiManager = (WifiManager) (context.getSystemService(Context.WIFI_SERVICE));
-            wifiInfo = wifiManager.getConnectionInfo();
-            if (wifiInfo.getSSID().substring(1, wifiInfo.getSSID().length() - 1).equals(ssid) ){
-                break;
-            }
-        }
-     /*   for (WifiConfiguration c: wifiConfigList) {
-            wifiManager.enableNetwork(c.networkId,true);
-        }*/
-        if (i >= 10 )return false;
-        return true;
-    }
 
     /**
      * 设置设备需要连接的wifi名称和密码
@@ -148,7 +61,6 @@ public class Configuration {
             Log.i("setRouterInfo", "run: wifi名称不能为空");
             return -3;
         }
-        WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
         WifiInfo wifiInfo = wifiManager.getConnectionInfo();
         if (wifiInfo.getBSSID() == null)
             return -2;
@@ -208,65 +120,9 @@ public class Configuration {
         return result[0];
     }
 
-    private static final int WIFICIPHER_NOPASS = 0;
-    private static final int WIFICIPHER_WEP = 1;
-    private static final int WIFICIPHER_WPA = 2;
 
-    private WifiConfiguration createWifiConfig(String ssid, String password, int type) {
-        //初始化WifiConfiguration
-        WifiConfiguration config = new WifiConfiguration();
-        config.allowedAuthAlgorithms.clear();
-        config.allowedGroupCiphers.clear();
-        config.allowedKeyManagement.clear();
-        config.allowedPairwiseCiphers.clear();
-        config.allowedProtocols.clear();
-        //指定对应的SSID
-        config.SSID = "\"" + ssid + "\"";
 
-        //如果之前有类似的配置
-        WifiConfiguration tempConfig = isExist(ssid);
-        if (tempConfig != null) {
-            //则清除旧有配置
-            wifiManager.removeNetwork(tempConfig.networkId);
-        }
 
-        //不需要密码的场景
-        if (type == WIFICIPHER_NOPASS) {
-            config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
-            //以WEP加密的场景
-        } else if (type == WIFICIPHER_WEP) {
-            config.hiddenSSID = true;
-            config.wepKeys[0] = "\"" + password + "\"";
-            config.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
-            config.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.SHARED);
-            config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
-            config.wepTxKeyIndex = 0;
-            //以WPA加密的场景，自己测试时，发现热点以WPA2建立时，同样可以用这种配置连接
-        } else if (type == WIFICIPHER_WPA) {
-            config.preSharedKey = "\"" + password + "\"";
-            config.hiddenSSID = true;
-            config.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
-            config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
-            config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
-            config.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
-            config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
-            config.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
-            config.status = WifiConfiguration.Status.ENABLED;
-        }
 
-        return config;
-    }
-
-    private WifiConfiguration isExist(String ssid) {
-
-        List<WifiConfiguration> configs = wifiManager.getConfiguredNetworks();
-
-        for (WifiConfiguration config : configs) {
-            if (config.SSID.equals("\"" + ssid + "\"")) {
-                return config;
-            }
-        }
-        return null;
-    }
 
 }
