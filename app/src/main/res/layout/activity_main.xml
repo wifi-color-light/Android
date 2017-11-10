@@ -32,7 +32,8 @@
         android:hint="路由密码"
         android:inputType="textPersonName"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/routerNameText" />
+        app:layout_constraintTop_toBottomOf="@+id/routerNameText"
+        android:layout_marginStart="8dp" />
     <Button
         android:id="@+id/router"
 
@@ -40,13 +41,10 @@
         android:text="路由"
 
         android:layout_width="88dp"
-        app:layout_constraintLeft_toRightOf="@+id/routerNameText"
-        android:layout_marginLeft="22dp"
-        android:layout_marginStart="16dp"
+        app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         android:layout_marginTop="24dp"
-        android:layout_marginRight="22dp"
-        app:layout_constraintRight_toRightOf="parent" />
+        app:layout_constraintLeft_toRightOf="@+id/routerNameText" />
 
     <EditText
         android:id="@+id/deviceAPname"
@@ -58,7 +56,8 @@
         android:hint="设备热点名称"
         android:inputType="textPersonName"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/routerPassText" />
+        app:layout_constraintTop_toBottomOf="@+id/routerPassText"
+        android:layout_marginStart="8dp" />
 
     <EditText
         android:id="@+id/deviceAPpass"
@@ -70,20 +69,19 @@
         android:hint="设备热点密码"
         android:inputType="textPersonName"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/deviceAPname" />
+        app:layout_constraintTop_toBottomOf="@+id/deviceAPname"
+        android:layout_marginStart="8dp" />
 
     <Button
         android:id="@+id/scanBt"
         android:layout_width="88dp"
         android:layout_height="93dp"
         android:text="扫描"
-        app:layout_constraintLeft_toRightOf="@+id/deviceAPpass"
-        android:layout_marginLeft="22dp"
-        android:layout_marginStart="16dp"
+        app:layout_constraintRight_toRightOf="parent"
         android:layout_marginTop="24dp"
         app:layout_constraintTop_toBottomOf="@+id/router"
-        android:layout_marginRight="22dp"
-        app:layout_constraintRight_toRightOf="parent" />
+        app:layout_constraintLeft_toRightOf="@+id/deviceAPname"
+        app:layout_constraintHorizontal_bias="0.509" />
     <Button
         android:id="@+id/configBt"
         android:layout_width="341dp"
@@ -91,10 +89,44 @@
         android:text="一键配置"
         android:layout_marginTop="16dp"
         app:layout_constraintTop_toBottomOf="@+id/deviceAPpass"
-        android:layout_marginLeft="24dp"
         app:layout_constraintLeft_toLeftOf="parent"
-        android:layout_marginRight="24dp"
+        app:layout_constraintRight_toRightOf="parent" />
+
+    <Button
+        android:id="@+id/button2"
+        style="@android:style/Widget.Button.Toggle"
+        android:layout_width="89dp"
+        android:layout_height="112dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="24dp"
+        android:text="开关"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/configBt" />
+
+    <SeekBar
+        android:id="@+id/seekBar5"
+        android:layout_width="256dp"
+        android:layout_height="30dp"
+        android:layout_marginTop="22dp"
+        app:layout_constraintTop_toBottomOf="@+id/configBt"
+        app:layout_constraintLeft_toLeftOf="@+id/seekBar6" />
+
+    <SeekBar
+        android:id="@+id/seekBar6"
+        android:layout_width="256dp"
+        android:layout_height="30dp"
+        android:layout_marginTop="21dp"
+        app:layout_constraintTop_toBottomOf="@+id/seekBar5"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintHorizontal_bias="0.2" />
+        android:layout_marginRight="8dp" />
+
+    <SeekBar
+        android:id="@+id/seekBar7"
+        android:layout_width="256dp"
+        android:layout_height="30dp"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginTop="16dp"
+        app:layout_constraintTop_toBottomOf="@+id/seekBar6"
+        android:layout_marginRight="8dp" />
 
 </android.support.constraint.ConstraintLayout>
