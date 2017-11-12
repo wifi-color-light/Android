@@ -9,6 +9,7 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Parcelable;
 import android.util.Log;
+import org.greenrobot.eventbus.EventBus;
 
 
 /**
@@ -30,6 +31,7 @@ public class WIFIStateChangedBroadcastReceiver extends BroadcastReceiver {
                 if(isConnected){
                     //WifiInfo wifiInfo = ((WifiManager)context.getSystemService(context.WIFI_SERVICE)).getConnectionInfo();
                     Messagequeue.addMessage(new Message(MessageGroup.WIFI,WifiMessageId.connection,null));
+                    EventBus.getDefault().post(new WiFiEvent(state));
                 }else{
 
                 }
