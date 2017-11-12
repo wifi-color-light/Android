@@ -22,6 +22,10 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+
+import java.util.EventListener;
 import java.util.List;
 
 import static android.R.attr.button;
@@ -29,7 +33,7 @@ import static android.R.attr.id;
 
 public class MainActivity extends AppCompatActivity {
     private AlertDialog dialog;
-    Button routerBt ;
+    Button routerBt;
     EditText routerName;
     EditText routerPass;
     EditText deviceAPname;
@@ -38,25 +42,29 @@ public class MainActivity extends AppCompatActivity {
     Button scanBt;
     Configuration config;
     WifiAdmin wifiAdmin;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         routerBt = (Button) findViewById(R.id.router);
-        routerName = (EditText)findViewById(R.id.routerNameText);
-        routerPass = (EditText)findViewById(R.id.routerPassText);
-        deviceAPname = (EditText)findViewById(R.id.deviceAPname);
-        deviceAPpass = (EditText)findViewById(R.id.deviceAPpass);
-        configBt = (Button)findViewById(R.id.configBt) ;
-        scanBt = (Button)findViewById(R.id.scanBt);
+        routerName = (EditText) findViewById(R.id.routerNameText);
+        routerPass = (EditText) findViewById(R.id.routerPassText);
+        deviceAPname = (EditText) findViewById(R.id.deviceAPname);
+        deviceAPpass = (EditText) findViewById(R.id.deviceAPpass);
+        configBt = (Button) findViewById(R.id.configBt);
+        scanBt = (Button) findViewById(R.id.scanBt);
+
         config = new Configuration(MainActivity.this);
         wifiAdmin = new WifiAdmin(MainActivity.this);
+
+        //EventBus.getDefault().register(this);
         routerBt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
                 String wifiName = wifiAdmin.connectedWifiName();
-                routerName.setText(wifiName.substring(1,wifiName.length()-1));
+                routerName.setText(wifiName.substring(1, wifiName.length() - 1));
             }
         });
         scanBt.setOnClickListener(new View.OnClickListener() {
@@ -71,17 +79,36 @@ public class MainActivity extends AppCompatActivity {
         configBt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-               if(wifiAdmin.changeWifiConnected(deviceAPname.getText().toString(),deviceAPpass.getText().toString()))
-               {
-
-                   //config.setRouterInfo(routerName.getText().toString(),routerPass.getText().toString());
-               }
-
+                if (!EventBus.getDefault().isRegistered(MainActivity.this))
+                    EventBus.getDefault().register(MainActivity.this);
+                wifiAdmin.changeWifiConnected(deviceAPname.getText().toString(),deviceAPpass.getText().toString());
+                //config.setRouterInfo(routerName.getText().toString(),routerPass.getText().toString());
             }
         });
 
 
+    }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+        EventBus.getDefault().unregister(this);
+    }
+
+    @Subscribe
+    public void onEventMainThread(WiFiEvent wiFiEvent) {
+        Log.i("MainActivity", "onEventMainThread: WiFi连接事件已发生 连接的wifi名称为：" + wifiAdmin.connectedWifiName());
+       if (wifiAdmin.connectedWifiName().substring(1,wifiAdmin.connectedWifiName().length()-1).equals(deviceAPname.getText().toString()))
+       {
+
+           config.setRouterInfo(routerName.getText().toString(),routerPass.getText().toString());
+       }
+       else {
+
+           MainActivity.this.startActivity(new Intent(android.provider.Settings.ACTION_WIFI_SETTINGS));
+       }
+
+        EventBus.getDefault().unregister(this);
     }
 
     @Override
@@ -111,4 +138,5 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
     }
+
 }
