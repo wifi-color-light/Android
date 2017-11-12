@@ -64,18 +64,20 @@ public class Configuration {
         WifiInfo wifiInfo = wifiManager.getConnectionInfo();
         if (wifiInfo.getBSSID() == null)
             return -2;
-        DhcpInfo dhcpInfo = wifiManager.getDhcpInfo();
-        final String IP = (dhcpInfo.gateway & 0xff) + "." + ((dhcpInfo.gateway >> 8) & 0xff) + "."
-                + ((dhcpInfo.gateway >> 16) & 0xff) + "." + ((dhcpInfo.gateway >> 24) & 0xff);
-        Log.i("setRouterInfo", "run routerIP: " + IP);
+
 
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
+                String routerSSID = ssid;
                 HttpURLConnection connection = null;
                 URL url = null;
                 URL url2 = null;
 
+                DhcpInfo dhcpInfo = wifiManager.getDhcpInfo();
+                String IP = (dhcpInfo.gateway & 0xff) + "." + ((dhcpInfo.gateway >> 8) & 0xff) + "."
+                        + ((dhcpInfo.gateway >> 16) & 0xff) + "." + ((dhcpInfo.gateway >> 24) & 0xff);
+                Log.i("setRouterInfo", "run routerIP: " + IP);
                 try {
                     url = new URL("http://" + IP + "/ssid:" + ssid + "password:" + password + "\r");
                 } catch (MalformedURLException e) {
@@ -105,24 +107,15 @@ public class Configuration {
                     }
 
                 } catch (IOException e) {
+                    Log.i("setRouterInfo", "run: " + e.getMessage());
                     e.printStackTrace();
                 }
 
             }
         });
         thread.start();
-        while (!(thread.getState() == Thread.State.TERMINATED))
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        return result[0];
+        return 0;
     }
-
-
-
-
 
 
 }
