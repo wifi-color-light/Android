@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
+import android.net.NetworkInfo;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
@@ -172,54 +173,29 @@ public class WifiAdmin {
     public boolean changeWifiConnected(final String ssid, final String password) {
         Log.i("Configuration", "changeWifiConnected: ssid: " + ssid + "\tpassword: " + password);
         wifiInfo = wifiManager.getConnectionInfo();
-        //判断当前连接的wifi是否是指定连接的WiFi
-        if (wifiInfo.getSSID().substring(1, wifiInfo.getSSID().length() - 1).equals(ssid))
-            return true;
-        //断开当前连接
-        wifiManager.disconnect();
-
         //获取wifi热点配置列表，并将列表中的wifi热点禁止连接
         wifiConfigurations = wifiManager.getConfiguredNetworks();
         for (WifiConfiguration c : wifiConfigurations) {
-            wifiManager.disableNetwork(c.networkId);
+            if (!c.SSID.substring(1,c.SSID.length()-1).equals(ssid))
+                wifiManager.disableNetwork(c.networkId);
         }
+       wifiManager.disableNetwork(wifiInfo.getNetworkId());
+        //断开当前连接
+        wifiManager.disconnect();
         //判断指定连接的热点信息是否存在于配置列表中；
         WifiConfiguration config = isExist(ssid);
         if (config != null && password == null)
             return wifiManager.enableNetwork(config.networkId, true);
-        else if (config != null) wifiManager.removeNetwork(config.networkId);
-
+        else if (config != null){
+          boolean result =   wifiManager.removeNetwork(config.networkId);
+            Log.i("WifiAdmin", "changeWifiConnected: 删除：networkID:" + config.networkId + "结果："
+            + result);
+        }
         //创建新的热点配置信息，并添加至配置列表中
         int wcgID = wifiManager.addNetwork(createWifiConfig(ssid, password, WIFICIPHER_WPA));
-        wifiManager.enableNetwork(wcgID, true);
-        //创建线程，规定时间查询wifi连接是否切换成功
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                int i;
-                for (i = 0; i < 10; i++) {
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    wifiInfo = wifiManager.getConnectionInfo();
-                    if (wifiInfo.getSSID().substring(1, wifiInfo.getSSID().length() - 1).equals(ssid)) {
-                        break;
-                    }
-                }
-                if (i >= 10)
-                    context.startActivity(new Intent(android.provider.Settings.ACTION_WIFI_SETTINGS));
-                else Log.i("changeWifiConnected", "run: 已成功连接至指定wifi热点");
-            }
-        });
-        thread.start();
-
-        for (WifiConfiguration c : wifiConfigurations) {
-            wifiManager.enableNetwork(c.networkId, true);
-        }
-
-
+        boolean result =  wifiManager.enableNetwork(wcgID, true);
+        Log.i("WifiAdmin", "changeWifiConnected: 使能：networkID:" + config.networkId + "结果："
+                + result);
         return true;
     }
 
@@ -227,7 +203,7 @@ public class WifiAdmin {
     private static final int WIFICIPHER_WEP = 1;
     private static final int WIFICIPHER_WPA = 2;
 
-    private WifiConfiguration createWifiConfig(String ssid, String password, int type) {
+    public WifiConfiguration createWifiConfig(String ssid, String password, int type) {
         //初始化WifiConfiguration
         WifiConfiguration config = new WifiConfiguration();
         config.allowedAuthAlgorithms.clear();
